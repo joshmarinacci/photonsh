@@ -4,13 +4,13 @@ var fs = require('fs');
 var hu = require('humanize');
 var ansi = require('ansi');
 var path = require('path');
-
+var AsciiTable = require('ascii-table');
 
 var cwd = process.cwd();
 var basecwd = cwd;
 var prompt = "Sup?▶ ";
 
-
+var completions = [];
 function completer(line) {
     var m = line.match(/^(\w+)\s+(.*)/);
     if(m) {
@@ -22,11 +22,9 @@ function completer(line) {
         return [hits, line];
     }
 
-    var completions = ['ls','cp','rm','mkdir','mv','more','rmdir'];
     var hits = completions.filter(function(c) { return c.indexOf(line) == 0 })
     return [hits.length ? hits : completions, line]
 }
-
 
 function fileError(msg,file) {
     cursor
@@ -34,7 +32,6 @@ function fileError(msg,file) {
         .green().write(file)
         .reset().write("\n");
 }
-
 
 function listDir(dir) {
     return fs.readdirSync(dir)
@@ -51,17 +48,24 @@ var rl = readline.createInterface({
 var cursor = ansi(rl.output);
 
 var commands = {
-   ls:function() {
-       var files = listDir(cwd).map(function(file) {
-           return {name:file, stats:fs.statSync(cwd+'/'+file)};
-       });
-       files.forEach(function(file){
-           cursor
-               .red().write(file.name).reset()
-               .write(' ')
-               .bold().write(hu.filesize(file.stats.size)).reset()
-               .write('\n');
-       })
+    ls:function() {
+        var files = listDir(cwd).map(function(file) {
+            return {name:file, stats:fs.statSync(cwd+'/'+file)};
+        });
+        var table = new AsciiTable()
+        table
+            .removeBorder()
+            .setAlign(0,AsciiTable.LEFT)
+            .setAlign(1,AsciiTable.RIGHT)
+            .setAlign(2,AsciiTable.LEFT)
+            .setHeading("name",'size','date');
+
+        files.forEach(function(file) {
+            table.addRow(file.name,
+                         hu.filesize(file.stats.size),
+                         hu.date("Y M j H:m:s",new Date(file.stats.mtime)));
+        });
+        console.log(table.toString())
    },
 
    cd:function(file) {
@@ -108,10 +112,23 @@ var commands = {
 
    mv: function(a,b) {
        fs.renameSync(path.join(cwd,a),path.join(cwd,b));
+   },
+
+   pwd: function() {
+       cursor.green().write(cwd).reset().write('\n');
+   },
+
+   help: function() {
+       cursor.yellow().write("Welcome to Photon Shell\n");
+       cursor.white().write("you can use the following commands\n");
+       cursor.green().write(Object.keys(commands).sort().join("\n"));
+       cursor.reset();
    }
 }
 
 commands['dir'] = commands['ls'];
+
+completions = Object.keys(commands).sort();
 
 
 function updatePrompt() {
@@ -127,17 +144,18 @@ function executeCommand(fn, args) {
 }
 
 rl.on('line', function(cmd) {
-   var cmds = cmd.trim().split(' ');
-   cursor.cyan().write("DEBUG = " + cmds.join(",")).reset().write('\n');
-   var bin = cmds[0];
-   var args = cmds.slice(1);
-   if(commands[bin]) {
-       executeCommand(commands[bin],args);
-   } else {
-       console.log("I can't do",bin);
-   }
-   console.log("");
-   rl.prompt();
+    console.log("");
+    var cmds = cmd.trim().split(' ');
+    cursor.cyan().write("DEBUG = " + cmds.join(",")).reset().write('\n\n');
+    var bin = cmds[0];
+    var args = cmds.slice(1);
+    if(commands[bin]) {
+        executeCommand(commands[bin],args);
+    } else {
+        cursor.red().write("Unknown command: ").green().write(bin).reset().write('\n');
+    }
+    console.log("");
+    rl.prompt();
 });
 
 rl.on('close', function() {

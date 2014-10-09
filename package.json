@@ -1,6 +1,6 @@
 {
     "name": "photonsh",
-    "version":"0.0.2",
+    "version":"0.0.3",
     "description":"A new command line shell",
     "homepage":"https://github.com/joshmarinacci/photonsh",
     "author": {
