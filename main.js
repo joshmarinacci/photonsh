@@ -5,6 +5,8 @@ var hu = require('humanize');
 var ansi = require('ansi');
 var path = require('path');
 var AsciiTable = require('ascii-table');
+var clc = require('cli-color');
+
 
 var cwd = process.cwd();
 var basecwd = cwd;
@@ -58,12 +60,12 @@ var commands = {
             .setAlign(0,AsciiTable.LEFT)
             .setAlign(1,AsciiTable.RIGHT)
             .setAlign(2,AsciiTable.LEFT)
-            .setHeading("name",'size','date');
+            //.setHeading("name",'size','date');
 
         files.forEach(function(file) {
-            table.addRow(file.name,
-                         hu.filesize(file.stats.size),
-                         hu.date("Y M j H:m:s",new Date(file.stats.mtime)));
+            table.addRow(clc.red(file.name),
+                         clc.green(hu.filesize(file.stats.size)),
+                         clc.blue(hu.date("Y M j H:m:s",new Date(file.stats.mtime))));
         });
         console.log(table.toString())
    },
@@ -165,3 +167,6 @@ rl.on('close', function() {
 
 updatePrompt();
 rl.prompt();
+
+
+console.log(clc.red("some red text"));

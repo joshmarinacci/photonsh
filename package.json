@@ -1,6 +1,6 @@
 {
   "name": "photonsh",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A new command line shell",
   "homepage": "https://github.com/joshmarinacci/photonsh",
   "author": {
@@ -13,6 +13,7 @@
   "dependencies": {
     "ansi": "^0.3.0",
     "ascii-table": "0.0.4",
+    "cli-color": "^0.3.2",
     "humanize": "0.0.9"
   },
   "repository": {
