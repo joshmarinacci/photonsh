@@ -68,64 +68,60 @@ var commands = {
                          clc.blue(hu.date("Y M j H:m:s",new Date(file.stats.mtime))));
         });
         console.log(table.toString())
-   },
+    },
 
-   cd:function(file) {
-       var ncwd = path.join(cwd,file);
-       if(!fs.existsSync(ncwd))
-           return fileError("No such directory: ",file);
-       if(!fs.statSync(ncwd).isDirectory())
-           return fileError("Not a directory: ",file);
-       cwd = ncwd;
-       updatePrompt();
-   },
+    cd:function(file) {
+        var ncwd = path.join(cwd,file);
+        if(!fs.existsSync(ncwd))
+            return fileError("No such directory: ",file);
+        if(!fs.statSync(ncwd).isDirectory())
+            return fileError("Not a directory: ",file);
+        cwd = ncwd;
+        updatePrompt();
+    },
 
-   more: function(filename) {
+    more: function(filename) {
        var file = path.join(cwd,filename);
-       if(!fs.existsSync(file))
-           return fileError("No such file: ",file);
-       if(!fs.statSync(file).isFile())
-           return fileError("Not a file: ",file);
+       if(!fs.existsSync(file)) return fileError("No such file: ",file);
+       if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
        var inp = fs.createReadStream(file);
        inp.pipe(rl.output);
-   },
+    },
 
-   cp: function(a,b) {
-       if(!fs.existsSync(a))
-           return fileError("No such file: ",a);
-       if(!fs.statSync(a).isFile())
-           return fileError("Not a file: ",a);
-       var ip = fs.createReadStream(path.join(cwd,a));
-       var op = fs.createWriteStream(path.join(cwd,b));
-       ip.pipe(op);
-   },
+    cp: function(a,b) {
+        if(!fs.existsSync(a))         return fileError("No such file: ",a);
+        if(!fs.statSync(a).isFile())  return fileError("Not a file: ",a);
+        var ip = fs.createReadStream(path.join(cwd,a));
+        var op = fs.createWriteStream(path.join(cwd,b));
+        ip.pipe(op);
+    },
 
-   rm: function(file) {
+    rm: function(file) {
        fs.unlinkSync(path.join(cwd,file));
-   },
+    },
 
-   rmdir: function(dir) {
+    rmdir: function(dir) {
        fs.rmdirSync(path.join(cwd,dir));
-   },
+    },
 
-   mkdir: function(dir) {
+    mkdir: function(dir) {
        fs.mkdirSync(path.join(cwd,dir));
-   },
+    },
 
-   mv: function(a,b) {
+    mv: function(a,b) {
        fs.renameSync(path.join(cwd,a),path.join(cwd,b));
-   },
+    },
 
-   pwd: function() {
+    pwd: function() {
        cursor.green().write(cwd).reset().write('\n');
-   },
+    },
 
-   help: function() {
-       cursor.yellow().write("Welcome to Photon Shell\n");
-       cursor.white().write("you can use the following commands\n");
-       cursor.green().write(Object.keys(commands).sort().join("\n"));
-       cursor.reset();
-   }
+    help: function() {
+        cursor.yellow().write("Welcome to Photon Shell\n");
+        cursor.white().write("you can use the following commands\n");
+        cursor.green().write(Object.keys(commands).sort().join("\n"));
+        cursor.reset();
+    }
 }
 
 commands['dir'] = commands['ls'];
