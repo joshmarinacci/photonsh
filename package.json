@@ -1,7 +1,10 @@
 {
-  "name": "PhotonShell",
-  "dependencies": {
-    "ansi": "^0.3.0",
-    "humanize": "0.0.9"
-  }
+    "name": "PhotonShell",
+    "scripts":{
+        "start":"node main.js"
+    },
+    "dependencies": {
+        "ansi": "^0.3.0",
+        "humanize": "0.0.9"
+    }
 }
