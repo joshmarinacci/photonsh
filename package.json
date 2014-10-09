@@ -1,10 +1,21 @@
 {
-    "name": "PhotonShell",
-    "scripts":{
-        "start":"node main.js"
+    "name": "photonsh",
+    "version":"0.0.2",
+    "description":"A new command line shell",
+    "homepage":"https://github.com/joshmarinacci/photonsh",
+    "author": {
+        "name":"Josh Marinacci",
+        "email":"joshua@marinacci.org",
+        "url":"http://joshondesign.com/"
     },
+    "license":"BSD-3-Clause",
+    "bin":"./main.js",
     "dependencies": {
         "ansi": "^0.3.0",
         "humanize": "0.0.9"
+    },
+    "repository":{
+        "type":"git",
+        "url":"https://github.com/joshmarinacci/photonsh.git"
     }
 }
