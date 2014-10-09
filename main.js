@@ -11,28 +11,35 @@ var prompt = "Sup?▶ ";
 
 
 function completer(line) {
- var m = line.match(/^(\w+)\s+(.*)/);
- if(m) {
-     var cmd = m[1];
-     var rest = m[2];
-     var files = fs.readdirSync(cwd);
-     var hits = files
-       .filter(function(c) { return c.indexOf(rest) == 0 })
-       .map(function(s){  return cmd+' '+s; });
-     return [hits, line];
- }
+    var m = line.match(/^(\w+)\s+(.*)/);
+    if(m) {
+        var cmd = m[1];
+        var rest = m[2];
+        var hits = listDir(cwd)
+            .filter(function(c) { return c.indexOf(rest) == 0 })
+            .map(function(s){  return cmd+' '+s; });
+        return [hits, line];
+    }
 
- var completions = ['ls','cp','rm','mkdir','mv','more','rmdir'];
- var hits = completions.filter(function(c) { return c.indexOf(line) == 0 })
- return [hits.length ? hits : completions, line]
+    var completions = ['ls','cp','rm','mkdir','mv','more','rmdir'];
+    var hits = completions.filter(function(c) { return c.indexOf(line) == 0 })
+    return [hits.length ? hits : completions, line]
 }
 
 
 function fileError(msg,file) {
-       cursor
-           .red().write(msg)
-           .green().write(file)
-           .reset().write("\n");
+    cursor
+        .red().write(msg)
+        .green().write(file)
+        .reset().write("\n");
+}
+
+
+function listDir(dir) {
+    return fs.readdirSync(dir)
+        .filter(function(file) {
+            return file.indexOf('.')!=0;
+        });
 }
 
 var rl = readline.createInterface({
@@ -43,9 +50,8 @@ var rl = readline.createInterface({
 var cursor = ansi(rl.output);
 
 var commands = {
-
    ls:function() {
-       var files = fs.readdirSync(cwd).map(function(file) {
+       var files = listDir(cwd).map(function(file) {
            return {name:file, stats:fs.statSync(cwd+'/'+file)};
        });
        files.forEach(function(file){
