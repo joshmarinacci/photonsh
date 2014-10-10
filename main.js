@@ -4,8 +4,10 @@ var fs = require('fs');
 var hu = require('humanize');
 var ansi = require('ansi');
 var path = require('path');
+var es  = require('event-stream');
 var AsciiTable = require('ascii-table');
 var clc = require('cli-color');
+var split = require('split');
 
 
 var cwd = process.cwd();
@@ -35,6 +37,7 @@ function fileError(msg,file) {
         .reset().write("\n");
 }
 
+//list directory, skipping hidden files
 function listDir(dir) {
     return fs.readdirSync(dir)
         .filter(function(file) {
@@ -48,6 +51,8 @@ var rl = readline.createInterface({
    completer:completer,
 });
 var cursor = ansi(rl.output);
+
+var qq = clc.red('"');
 
 var commands = {
     ls:function() {
@@ -81,11 +86,30 @@ var commands = {
     },
 
     more: function(filename) {
-       var file = path.join(cwd,filename);
-       if(!fs.existsSync(file)) return fileError("No such file: ",file);
-       if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
-       var inp = fs.createReadStream(file);
-       inp.pipe(rl.output);
+        var file = path.join(cwd,filename);
+        if(!fs.existsSync(file)) return fileError("No such file: ",file);
+        if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
+        var inp = fs.createReadStream(file);
+        if(file.toLowerCase().indexOf('.json')>=0) {
+            inp.pipe(es.replace('"',clc.blue('"')))
+                .pipe(es.replace('{',clc.blue('{')))
+                .pipe(es.replace('}',clc.blue('}')))
+                .pipe(es.replace(',',clc.blue(',')))
+                .pipe(split())
+                .pipe(es.through(function write(data){
+                    console.log("write");
+                    this.emit('data',data);
+                },function end(){
+                    console.log('end');
+                    this.emit('end');
+                }))
+                .on('data', function (line) {
+                    console.log(line);
+                });
+                //.pipe(rl.output);
+        } else {
+            inp.pipe(rl.output);
+        }
     },
 
     cp: function(a,b) {
