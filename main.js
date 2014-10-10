@@ -54,6 +54,44 @@ var cursor = ansi(rl.output);
 
 var qq = clc.red('"');
 
+function Pager(inp) {
+    var self = this;
+    this.count = 0;
+    this.active = true;
+    inp
+        .pipe(es.split())
+        .pipe(es.through(function(data){
+            self.filter = this;
+            self.count++;
+            if(self.count %10 == 0) {
+                self.filter.pause();
+                console.log("==== more");
+            } else {
+                console.log(data);
+            }
+        },function end(){
+            self.cleanup();
+        }));
+    this.cleanup = function() {
+        this.active = false;
+        rl.line = '';
+        rl.prompt();
+    }
+    this.resume = function() {
+        this.filter.resume();
+    }
+    this.keypress = function(k) {
+        if(k=='q') {
+            this.cleanup();
+        }
+        if(k==' ') {
+            this.resume();
+        }
+    }
+}
+
+var pager = null;
+
 var commands = {
     ls:function() {
         var files = listDir(cwd).map(function(file) {
@@ -85,11 +123,17 @@ var commands = {
         updatePrompt();
     },
 
+    exit: function() {
+        process.exit(0);
+    },
+
     more: function(filename) {
         var file = path.join(cwd,filename);
         if(!fs.existsSync(file)) return fileError("No such file: ",file);
         if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
         var inp = fs.createReadStream(file);
+        pager = new Pager(inp);
+        /*
         if(file.toLowerCase().indexOf('.json')>=0) {
             inp.pipe(es.replace('"',clc.blue('"')))
                 .pipe(es.replace('{',clc.blue('{')))
@@ -109,7 +153,8 @@ var commands = {
                 //.pipe(rl.output);
         } else {
             inp.pipe(rl.output);
-        }
+        }*/
+
     },
 
     cp: function(a,b) {
@@ -165,11 +210,20 @@ function executeCommand(fn, args) {
    }
 }
 
+rl.input.on('keypress',function(k) {
+    if(pager && pager.active && k) {
+        pager.keypress(k);
+    }
+});
+
+
+
 rl.on('line', function(cmd) {
-    console.log("");
+    if(pager && pager.active) return;
     var cmds = cmd.trim().split(' ');
     cursor.cyan().write("DEBUG = " + cmds.join(",")).reset().write('\n\n');
     var bin = cmds[0];
+    if(bin.length == 0) return rl.prompt();
     var args = cmds.slice(1);
     if(commands[bin]) {
         executeCommand(commands[bin],args);
@@ -187,6 +241,3 @@ rl.on('close', function() {
 
 updatePrompt();
 rl.prompt();
-
-
-console.log(clc.red("some red text"));
