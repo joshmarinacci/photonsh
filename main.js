@@ -8,7 +8,7 @@ var es  = require('event-stream');
 var AsciiTable = require('ascii-table');
 var clc = require('cli-color');
 var split = require('split');
-
+var child_process = require('child_process');
 
 var cwd = process.cwd();
 var basecwd = cwd;
@@ -190,10 +190,12 @@ var commands = {
         cursor.white().write("you can use the following commands\n");
         cursor.green().write(Object.keys(commands).sort().join("\n"));
         cursor.reset();
-    }
+    },
+
 }
 
 commands['dir'] = commands['ls'];
+commands['quit'] = commands['exit'];
 
 completions = Object.keys(commands).sort();
 
@@ -216,7 +218,29 @@ rl.input.on('keypress',function(k) {
     }
 });
 
-
+function executeNativeCommand(bin, args) {
+    console.log('trying to invoke native command ',bin,args);
+    var ch = child_process.spawn(bin,args,{ cwd:cwd, });
+    ch.stdout.on('end',function(){
+        console.log("");
+        rl.prompt();
+    }).pipe(process.stdout);
+    /*
+    ch.stdout.on('data',function(data){
+        console.log('stdout',data.toString());
+    });
+    */
+    ch.stderr.on('data',function(data){
+        //console.log('stderr',data.toString());
+    });
+    ch.on('close',function() {
+        //console.log("process is closed");
+    })
+    ch.on('error',function(err) {
+        console.log("error",err);
+        cursor.red().write("Unknown command: ").green().write(bin).reset().write('\n');
+    })
+}
 
 rl.on('line', function(cmd) {
     if(pager && pager.active) return;
@@ -228,7 +252,7 @@ rl.on('line', function(cmd) {
     if(commands[bin]) {
         executeCommand(commands[bin],args);
     } else {
-        cursor.red().write("Unknown command: ").green().write(bin).reset().write('\n');
+        executeNativeCommand(bin,args);
     }
     console.log("");
     rl.prompt();
