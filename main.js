@@ -165,9 +165,11 @@ var commands = {
 
     help: function() {
         cursor.yellow().write("Welcome to Photon Shell\n");
+        cursor.red().write('  bugs to: joshua@marinacci.org\n\n');
         cursor.black().write("A simple 100% Node command line shell in < 300 lines.\n")
-        cursor.black().write("You can use the following commands, or regular binaries like 'git'\n");
+        cursor.black().write("You can use the following commands, or regular binaries like 'git'\n\n");
         cursor.green().write(Object.keys(commands).sort().join("\n"));
+        cursor.write('\n\n');
         cursor.reset();
     },
 
