@@ -133,28 +133,6 @@ var commands = {
         if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
         var inp = fs.createReadStream(file);
         pager = new Pager(inp);
-        /*
-        if(file.toLowerCase().indexOf('.json')>=0) {
-            inp.pipe(es.replace('"',clc.blue('"')))
-                .pipe(es.replace('{',clc.blue('{')))
-                .pipe(es.replace('}',clc.blue('}')))
-                .pipe(es.replace(',',clc.blue(',')))
-                .pipe(split())
-                .pipe(es.through(function write(data){
-                    console.log("write");
-                    this.emit('data',data);
-                },function end(){
-                    console.log('end');
-                    this.emit('end');
-                }))
-                .on('data', function (line) {
-                    console.log(line);
-                });
-                //.pipe(rl.output);
-        } else {
-            inp.pipe(rl.output);
-        }*/
-
     },
 
     cp: function(a,b) {
@@ -187,7 +165,8 @@ var commands = {
 
     help: function() {
         cursor.yellow().write("Welcome to Photon Shell\n");
-        cursor.white().write("you can use the following commands\n");
+        cursor.black().write("A simple 100% Node command line shell in < 300 lines.\n")
+        cursor.black().write("You can use the following commands, or regular binaries like 'git'\n");
         cursor.green().write(Object.keys(commands).sort().join("\n"));
         cursor.reset();
     },
@@ -260,5 +239,7 @@ rl.on('close', function() {
    console.log("Later Dude!");
 })
 
+
+commands.help();
 updatePrompt();
 rl.prompt();
