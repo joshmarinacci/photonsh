@@ -218,28 +218,22 @@ rl.input.on('keypress',function(k) {
     }
 });
 
-function executeNativeCommand(bin, args) {
-    console.log('trying to invoke native command ',bin,args);
-    var ch = child_process.spawn(bin,args,{ cwd:cwd, });
-    ch.stdout.on('end',function(){
-        console.log("");
-        rl.prompt();
-    }).pipe(process.stdout);
-    /*
-    ch.stdout.on('data',function(data){
-        console.log('stdout',data.toString());
+function executeNativeCommand(bin, args, cb) {
+    //console.log('trying to invoke native command ',bin,args);
+    var ch = child_process.spawn(bin,args,{
+        cwd:cwd,
+        env:process.env,
+        stdio:'inherit'
     });
-    */
-    ch.stderr.on('data',function(data){
-        //console.log('stderr',data.toString());
+    ch.on('exit',function() {
+        //console.log("process is exited");
+        if(cb) cb();
     });
-    ch.on('close',function() {
-        //console.log("process is closed");
-    })
     ch.on('error',function(err) {
         console.log("error",err);
         cursor.red().write("Unknown command: ").green().write(bin).reset().write('\n');
-    })
+        if(cb) cb();
+    });
 }
 
 rl.on('line', function(cmd) {
@@ -252,7 +246,10 @@ rl.on('line', function(cmd) {
     if(commands[bin]) {
         executeCommand(commands[bin],args);
     } else {
-        executeNativeCommand(bin,args);
+        executeNativeCommand(bin,args,function() {
+            console.log("");
+            rl.prompt();
+        });
     }
     console.log("");
     rl.prompt();
