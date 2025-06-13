@@ -1,26 +1,28 @@
 #!/usr/bin/env node
-var readline = require('readline');
-var fs = require('fs');
-var hu = require('humanize');
-var ansi = require('ansi');
-var path = require('path');
-var es  = require('event-stream');
-var AsciiTable = require('ascii-table');
-var clc = require('cli-color');
-var split = require('split');
-var child_process = require('child_process');
+import readline from 'node:readline'
+import fs from 'node:fs'
+import hu from 'humanize'
+import process from 'node:process'
+import ansi from 'ansi'
+import path from 'node:path'
+import es from 'event-stream'
+import AsciiTable from 'ascii-table'
+import clc from 'cli-color'
+import split from 'split'
+import child_process from "node:child_process"
 
-var cwd = process.cwd();
-var basecwd = cwd;
-var prompt = "Sup?▶ ";
+let cwd = process.cwd();
+const basecwd = cwd;
+const prompt = "Sup?▶ ";
 
-var completions = [];
+let completions = [];
+
 function completer(line) {
-    var m = line.match(/^(\w+)\s+(.*)/);
+    const m = line.match(/^(\w+)\s+(.*)/);
     if(m) {
-        var cmd = m[1];
-        var rest = m[2];
-        var hits = listDir(cwd)
+        const cmd = m[1];
+        const rest = m[2];
+        let hits = listDir(cwd)
             .filter(function(c) { return c.indexOf(rest) == 0 })
             .map(function(s){  return cmd+' '+s; });
         return [hits, line];
@@ -45,17 +47,15 @@ function listDir(dir) {
         });
 }
 
-var rl = readline.createInterface({
-   input: process.stdin,
-   output: process.stdout,
-   completer:completer,
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    completer: completer,
 });
-var cursor = ansi(rl.output);
-
-var qq = clc.red('"');
+let cursor = ansi(rl.output);
 
 function Pager(inp) {
-    var self = this;
+    const self = this;
     this.count = 0;
     this.active = true;
     inp
@@ -90,80 +90,80 @@ function Pager(inp) {
     }
 }
 
-var pager = null;
+let pager = null;
 
-var commands = {
-    ls:function() {
-        var files = listDir(cwd).map(function(file) {
-            return {name:file, stats:fs.statSync(cwd+'/'+file)};
+const commands = {
+    ls: function () {
+        const files = listDir(cwd).map(function (file) {
+            return {name: file, stats: fs.statSync(cwd + '/' + file)};
         });
-        var table = new AsciiTable()
+        const table = new AsciiTable();
         table
             .removeBorder()
-            .setAlign(0,AsciiTable.LEFT)
-            .setAlign(1,AsciiTable.RIGHT)
-            .setAlign(2,AsciiTable.LEFT)
-            //.setHeading("name",'size','date');
+            .setAlign(0, AsciiTable.LEFT)
+            .setAlign(1, AsciiTable.RIGHT)
+            .setAlign(2, AsciiTable.LEFT)
+        //.setHeading("name",'size','date');
 
-        files.forEach(function(file) {
+        files.forEach(function (file) {
             table.addRow(clc.red(file.name),
-                         clc.green(hu.filesize(file.stats.size)),
-                         clc.blue(hu.date("Y M j H:m:s",new Date(file.stats.mtime))));
+                clc.green(hu.filesize(file.stats.size)),
+                clc.blue(hu.date("Y M j H:m:s", new Date(file.stats.mtime))));
         });
         console.log(table.toString())
     },
 
-    cd:function(file) {
-        var ncwd = path.join(cwd,file);
-        if(!fs.existsSync(ncwd))
-            return fileError("No such directory: ",file);
-        if(!fs.statSync(ncwd).isDirectory())
-            return fileError("Not a directory: ",file);
+    cd: function (file) {
+        const ncwd = path.join(cwd, file);
+        if (!fs.existsSync(ncwd))
+            return fileError("No such directory: ", file);
+        if (!fs.statSync(ncwd).isDirectory())
+            return fileError("Not a directory: ", file);
         cwd = ncwd;
         updatePrompt();
     },
 
-    exit: function() {
+    exit: function () {
         process.exit(0);
     },
 
-    more: function(filename) {
-        var file = path.join(cwd,filename);
-        if(!fs.existsSync(file)) return fileError("No such file: ",file);
-        if(!fs.statSync(file).isFile()) return fileError("Not a file: ",file);
-        var inp = fs.createReadStream(file);
+    more: function (filename) {
+        const file = path.join(cwd, filename);
+        if (!fs.existsSync(file)) return fileError("No such file: ", file);
+        if (!fs.statSync(file).isFile()) return fileError("Not a file: ", file);
+        const inp = fs.createReadStream(file);
         pager = new Pager(inp);
     },
 
-    cp: function(a,b) {
-        if(!fs.existsSync(a))         return fileError("No such file: ",a);
-        if(!fs.statSync(a).isFile())  return fileError("Not a file: ",a);
-        var ip = fs.createReadStream(path.join(cwd,a));
-        var op = fs.createWriteStream(path.join(cwd,b));
+    cp: function (a, b) {
+        if (!fs.existsSync(a)) return fileError("No such file: ", a);
+        if (!fs.statSync(a).isFile()) return fileError("Not a file: ", a);
+        const ip = fs.createReadStream(path.join(cwd, a));
+        const op = fs.createWriteStream(path.join(cwd, b));
         ip.pipe(op);
     },
 
-    rm: function(file) {
-       fs.unlinkSync(path.join(cwd,file));
+    rm: function (file) {
+        fs.unlinkSync(path.join(cwd, file));
     },
 
-    rmdir: function(dir) {
-       fs.rmdirSync(path.join(cwd,dir));
+    rmdir: function (dir) {
+        fs.rmdirSync(path.join(cwd, dir));
     },
 
-    mkdir: function(dir) {
-       fs.mkdirSync(path.join(cwd,dir));
+    mkdir: function (dir) {
+        fs.mkdirSync(path.join(cwd, dir));
     },
 
-    mv: function(a,b) {
-       fs.renameSync(path.join(cwd,a),path.join(cwd,b));
+    mv: function (a, b) {
+        fs.renameSync(path.join(cwd, a), path.join(cwd, b));
     },
 
-    pwd: function() {
-       cursor.green().write(cwd).reset().write('\n');
+    pwd: function () {
+        cursor.green().write(cwd).reset().write('\n');
     },
 
-    help: function() {
+    help: function () {
         cursor.yellow().write("Welcome to Photon Shell\n");
         cursor.red().write('  bugs to: joshua@marinacci.org\n\n');
         cursor.black().write("A simple 100% Node command line shell in < 300 lines.\n")
@@ -173,7 +173,7 @@ var commands = {
         cursor.reset();
     },
 
-}
+};
 
 commands['dir'] = commands['ls'];
 commands['quit'] = commands['exit'];
@@ -201,10 +201,10 @@ rl.input.on('keypress',function(k) {
 
 function executeNativeCommand(bin, args, cb) {
     //console.log('trying to invoke native command ',bin,args);
-    var ch = child_process.spawn(bin,args,{
-        cwd:cwd,
-        env:process.env,
-        stdio:'inherit'
+    const ch = child_process.spawn(bin, args, {
+        cwd: cwd,
+        env: process.env,
+        stdio: 'inherit'
     });
     ch.on('exit',function() {
         //console.log("process is exited");
@@ -219,11 +219,11 @@ function executeNativeCommand(bin, args, cb) {
 
 rl.on('line', function(cmd) {
     if(pager && pager.active) return;
-    var cmds = cmd.trim().split(' ');
+    const cmds = cmd.trim().split(' ');
     cursor.cyan().write("DEBUG = " + cmds.join(",")).reset().write('\n\n');
-    var bin = cmds[0];
+    const bin = cmds[0];
     if(bin.length == 0) return rl.prompt();
-    var args = cmds.slice(1);
+    const args = cmds.slice(1);
     if(commands[bin]) {
         executeCommand(commands[bin],args);
     } else {
