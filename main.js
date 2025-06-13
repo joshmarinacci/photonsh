@@ -8,7 +8,7 @@ import path from 'node:path'
 import es from 'event-stream'
 import AsciiTable from 'ascii-table'
 import clc from 'cli-color'
-import split from 'split'
+// import split from 'split'
 import child_process from "node:child_process"
 
 let cwd = process.cwd();
